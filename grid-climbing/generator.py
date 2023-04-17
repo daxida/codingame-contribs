@@ -17,7 +17,7 @@ def generate(n, to_print=False):
         row = []
         for x in range(n):
             value = random.randint(0, 9)
-            value -= max(abs(y - center), abs(x - center)) // 2 
+            value -= max(abs(y - center), abs(x - center)) // 2
             value = max(0, value)
             row.append(str(value))
         grid.append(row)
@@ -34,7 +34,7 @@ def generate(n, to_print=False):
                 nx = x + dx
                 if 0 <= ny < n and 0 <= nx < n:
                     grid[ny][nx] = "9"
-    
+
     if to_print:
         print(n)
         print(' '.join(str(p) for p in penalties))
@@ -42,7 +42,6 @@ def generate(n, to_print=False):
             print(''.join(row))
     else:
         return n, penalties, grid
-
 
 
 generate(n)
