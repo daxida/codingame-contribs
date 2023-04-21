@@ -1,4 +1,4 @@
-# Thanks to @cedricdd for his tips to improve my previous solution
+# Thanks to @cedricdd and @timinator for their tips
 
 from functools import wraps
 from time import time
@@ -31,9 +31,13 @@ def dijkstra(start, end, grid, costs, n):
     solutions = []
 
     memo = {point: INF for point in grid}
+    seen = set()
     h = [(grid[start], start, [start])]
     while h:
         cost, cur, path = heapq.heappop(h)
+        if cur in seen:
+            continue
+        seen.add(cur)
         if cur == end:
             solutions.append(path)
 
@@ -70,7 +74,7 @@ def main():
     st = time()
     dijkstra(start, end, g, costs, n)
     ellapsed = time() - st
-    if ellapsed > 1.5:
+    if ellapsed > 2:
         print(f"Timeout: {ellapsed}")
 
 

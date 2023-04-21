@@ -7,9 +7,13 @@ def dist(p1, p2):
 
 def dijkstra(start, end, grid, costs):
     memo = {point: float("inf") for point in grid}
+    seen = set()
     h = [(grid[start], start, [start])]
     while h:
         cost, cur, path = heapq.heappop(h)
+        if cur in seen: 
+            continue
+        seen.add(cur)
 
         for p in grid:
             d = dist(p, cur)
