@@ -15,7 +15,7 @@ Tests generators and solutions for my CodinGame contributions.
 * [Le bon vieux françés] - [Contribution page](https://www.codingame.com/contribute/view/43379dd82c3d9ac24ac2b9eb3cf8868ddf4f8)
 * [String primes] - [Contribution page](https://www.codingame.com/contribute/view/41661416a26fca8dc6d6de2edf9bc7addc318)
 * [Name sort] - [Contribution page](https://www.codingame.com/contribute/view/40772d3102acd1dfe76e3dc05b59a34c24014)
-* [Hollerith string] - [Contribution page](https://www.codingame.com/contribute/view/36151a029b6cad971b52d02bfbd8f560e54ad)
+* [Hollerith string](./clash/hollerith) - [Contribution page](https://www.codingame.com/contribute/view/36151a029b6cad971b52d02bfbd8f560e54ad)
 * [Rotate 180] - [Contribution page](https://www.codingame.com/contribute/view/33642ff63f478245c3e3dfaad3d8692d41dc8)
 * [Perfect pairs] - [Contribution page](https://www.codingame.com/contribute/view/32586d50d0adfec06f6269a4358bcb652a789)
 * [String reduction] - [Contribution page](https://www.codingame.com/contribute/view/2856067338ee8581a52298bc586000de4097a)
