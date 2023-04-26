@@ -22,4 +22,4 @@ Tests generators and solutions for my CodinGame contributions.
 * [Traces] - [Contribution page](https://www.codingame.com/contribute/view/249973095c453ec010fe09b6c2d6c8692fdb9)
 * [Number box] - [Contribution page](https://www.codingame.com/contribute/view/242372eba72a892f31afef510eb04f01343af)
 * [Young diagram and conjugates] - [Contribution page](https://www.codingame.com/contribute/view/206742cbca985d49050b0e708d9bf432e8d6e)
-* [Cyclic groups] - [Contribution page](https://www.codingame.com/contribute/view/14733a0fd6e257f9020bd21b6c9b25b17327a)
+* [Cyclic groups](./clash/cyclic-groups) - [Contribution page](https://www.codingame.com/contribute/view/14733a0fd6e257f9020bd21b6c9b25b17327a)
