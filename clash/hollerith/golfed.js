@@ -1,0 +1,10 @@
+r=readline
+n=+r()
+s=r()
+a=[]
+f=0
+k=s.length
+while(f+n<k){a.push(s.substring(f,f+n));f+=n}
+a=a.map(e=>n+'H'+e)
+a.push(k-f+'H'+s.substring(f,k))
+print('/'+a.join`,`+'/')
