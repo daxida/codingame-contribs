@@ -59,8 +59,8 @@ def generate(n, names=None, to_print=True):
         print(cnt)
         for lib, dep in dependencies.items():
             if dep:
-                dep = ", ".join(dep)
                 nb_edges += len(dep)
+                dep = ", ".join(dep)
                 print(f"{lib} requires {dep}")
         # For evaluating the complexity
         print(f"Number of edges: {nb_edges}")

@@ -32,8 +32,8 @@ def kahn(dependencies):
         print("Fatal error: interdependencies.")
     else:
         print("Suggest to change import order:")
-        for mod in record:
-            print(f"import {mod}")
+        for library in record:
+            print(f"import {library}")
 
 
 def main():

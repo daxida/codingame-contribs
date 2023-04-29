@@ -17,9 +17,10 @@ def successful_compile(dependencies):
 def kahn(dependencies):
     ''' 
     Checks if there is a cycle and also builds the topological sorting.
-
-    I intended to do this but it ended up been easier working backwards:
+    
+    Initially I intended to do this but it ended up been easier working backwards:
     https://en.wikipedia.org/wiki/Topological_sorting
+    https://www.geeksforgeeks.org/topological-sorting-indegree-based-solution/
 
     Here we work with a heap starting with the independent libraries.
     Then we add the libraries that become independent after we imported
@@ -46,8 +47,8 @@ def kahn(dependencies):
         print("Fatal error: interdependencies.")
     else:
         print("Suggest to change import order:")
-        for mod in record:
-            print(f"import {mod}")
+        for library in record:
+            print(f"import {library}")
 
 
 def main():
