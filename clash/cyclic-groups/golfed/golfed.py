@@ -7,7 +7,7 @@ s = input().split()
 print(*[c * i for i in range(1, n) if c * i not in s] or [n])
 
 
-# Succint
+# 86 Succint
 
 I=input
 n=int(I())
