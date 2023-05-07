@@ -6,7 +6,7 @@ def generate(n, m):
     '''
     Yields strings "a" and "b" such that:
         "b" appears as a subsequence of "a" once and only once. 
-    We first generate the smaller string b of size n, then we carefully
+    We first generate the smaller string "b" of size n, then we carefully
     insert extra random characters so as to not violate the unicity.
     '''
     s = string.ascii_lowercase
