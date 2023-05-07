@@ -4,8 +4,8 @@ import string
 
 def generate(n, m):
     '''
-    Yields strings a and b such that:
-        b appears as b subsequence of a once and only once. 
+    Yields strings "a" and "b" such that:
+        "b" appears as a subsequence of "a" once and only once. 
     We first generate the smaller string b of size n, then we carefully
     insert extra random characters so as to not violate the unicity.
     '''
@@ -27,7 +27,7 @@ def generate(n, m):
         a += b[i]
         for _ in range(random.randrange(0, m)):
             c = random.choice(s)
-            # Ensure that in ...c1...c...c2.. c1 != c and c2 != c
+            # Ensures that in ...c1...c...c2.. c1 != c and c2 != c
             # otherwise the subsequence is not unique
             if c != b[i] and c != b[i+1]:
                 a += c
