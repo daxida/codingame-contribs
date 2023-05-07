@@ -4,8 +4,10 @@ import string
 
 def generate(n, m):
     '''
-    Yields strings a and b such that b appears as b subsequence of a
-    once and only once.
+    Yields strings a and b such that:
+        b appears as b subsequence of a once and only once. 
+    We first generate the smaller string b of size n, then we carefully
+    insert extra random characters so as to not violate the unicity.
     '''
     s = string.ascii_lowercase
     a = ""
@@ -65,7 +67,7 @@ def solve(a, b):
 
 
 def count_subsequence(S, T):
-    # Counts how many times S appears as a subsequence of T
+    # Counts how many times T appears as a subsequence of S
     # https://www.geeksforgeeks.org/count-distinct-occurrences-as-a-subsequence/amp/
     m = len(T)
     n = len(S)
@@ -92,7 +94,7 @@ def count_subsequence(S, T):
 
 
 def main():
-    n = 30  # size of the bigger string b
+    n = 30  # size of the smaller string n
     m = 2  # random interval for the creation of a
 
     a, b = generate(n, m)
