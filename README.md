@@ -18,7 +18,7 @@ Tests generators and solutions for my CodinGame contributions.
 * [Name sort] - [Contribution page](https://www.codingame.com/contribute/view/40772d3102acd1dfe76e3dc05b59a34c24014)
 * [Hollerith string](./clash/hollerith) - [Contribution page](https://www.codingame.com/contribute/view/36151a029b6cad971b52d02bfbd8f560e54ad)
 * [Rotate 180] - [Contribution page](https://www.codingame.com/contribute/view/33642ff63f478245c3e3dfaad3d8692d41dc8)
-* [Perfect pairs] - [Contribution page](https://www.codingame.com/contribute/view/32586d50d0adfec06f6269a4358bcb652a789)
+* [Perfect pairs](./clash/perfect-pairs) - [Contribution page](https://www.codingame.com/contribute/view/32586d50d0adfec06f6269a4358bcb652a789)
 * [String reduction] - [Contribution page](https://www.codingame.com/contribute/view/2856067338ee8581a52298bc586000de4097a)
 * [Traces] - [Contribution page](https://www.codingame.com/contribute/view/249973095c453ec010fe09b6c2d6c8692fdb9)
 * [Number box] - [Contribution page](https://www.codingame.com/contribute/view/242372eba72a892f31afef510eb04f01343af)
