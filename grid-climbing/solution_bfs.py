@@ -1,10 +1,16 @@
 # Thanks to @cedricdd for his tips to improve my previous solution
 
+# Old solution, works up to around N = 10
+
 import sys
 import time
 from collections import deque
+from itertools import product
 
 sys.stdin = open('input.txt', 'r')
+
+
+def E(*args): print(*args, file=sys.stderr)
 
 
 class Path:
@@ -13,33 +19,29 @@ class Path:
         self.path = path
         self.cost = cost
 
-    def pathPrint(self, grid, n):
+    def print_path(self, grid, n):
         ascii_grid = [[''] * n for _ in range(n)]
         for y in range(n):
             for x in range(n):
                 ascii_grid[y][x] = 'X' if (y, x) in self.path else '.'
 
         for row in ascii_grid:
-            print(''.join(row), file=sys.stderr)
+            E("".join(row))
 
 
-def getDistance(p1, p2):
+def get_distance(p1, p2):
     return max(abs(p1[1]-p2[1]), abs(p1[0]-p2[0]))
 
 
-def computeCost(y, x, yy, xx, grid, costs_table):
-    return grid[yy][xx] + costs_table[getDistance((y, x), (yy, xx)) - 1]
+def get_cost(y, x, yy, xx, grid, costs_table):
+    return grid[yy][xx] + costs_table[get_distance((y, x), (yy, xx)) - 1]
 
 
-def computeCosts(n, grid, costs_table):
+def precompute_costs(n, grid, costs_table):
     costs = {}
-    for y in range(n):
-        for x in range(n):
-            for yy in range(n):
-                for xx in range(n):
-                    if (y, x) != (yy, xx):
-                        costs[((y, x), (yy, xx))] = computeCost(
-                            y, x, yy, xx, grid, costs_table)
+    for y, x, yy, xx in product(range(n), repeat=4):
+        if (y, x) != (yy, xx):
+            costs[((y, x), (yy, xx))] = get_cost(y, x, yy, xx, grid, costs_table)
 
     return costs
 
@@ -49,7 +51,7 @@ def bfs(n, grid, start, end, costs):
     path = Path((0, 0), [(0, 0)], grid[0][0])
     queue = deque([path])
 
-    # Upper bound of straight going to the end
+    # Upper bound of going straight to the end
     upper_bound = grid[0][0] + costs[(start, end)]
     memo = [[upper_bound] * n for _ in range(n)]
 
@@ -78,10 +80,11 @@ def bfs(n, grid, start, end, costs):
 
             queue.append(new_path)
 
-    min_cost = min(s.cost for s in solutions) # also just equal to memo[n-1][n-1]
+    # Also just equal to memo[n-1][n-1]. Done this way to see the path.
+    min_cost = min(s.cost for s in solutions)
     for s in solutions:
         if s.cost == min_cost:
-            s.pathPrint(grid, n)
+            s.print_path(grid, n)
             break
 
     return memo[n-1][n-1]
@@ -91,7 +94,7 @@ def solve(n, costs_table, grid):
     start, end = (0, 0), (n-1, n-1)
 
     st = time.time()
-    costs = computeCosts(n, grid, costs_table)
+    costs = precompute_costs(n, grid, costs_table)
     print(f"Precomputing costs finished in {time.time()-st}", file=sys.stderr)
 
     st = time.time()

@@ -8,10 +8,10 @@ def dist(p1, p2):
 def dijkstra(start, end, grid, costs):
     memo = {point: float("inf") for point in grid}
     seen = set()
-    h = [(grid[start], start, [start])]
+    h = [(grid[start], start)]
     while h:
-        cost, cur, path = heapq.heappop(h)
-        if cur in seen: 
+        cost, cur = heapq.heappop(h)
+        if cur in seen:
             continue
         seen.add(cur)
 
@@ -20,8 +20,7 @@ def dijkstra(start, end, grid, costs):
             ncost = cost + costs[d - 1] + grid[p]
             if memo[p] > ncost:
                 memo[p] = ncost
-                nnode = (ncost, p, path + [p])
-                heapq.heappush(h, nnode)
+                heapq.heappush(h, (ncost, p))
 
     print(memo[end])
 
