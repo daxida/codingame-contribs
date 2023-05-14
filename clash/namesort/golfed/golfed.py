@@ -1,0 +1,1 @@
+print(*sorted(input(),key='854917632'.find),sep='')
