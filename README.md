@@ -13,7 +13,7 @@ Tests generators and solutions for my CodinGame contributions.
 * [String balls] - [Contribution page](https://www.codingame.com/contribute/view/388573d78acaeca9e34861401284ecfbe5447) - Puzzle page (Not validated yet)
 
 # Clashes
-* [Le bon vieux françés] - [Contribution page](https://www.codingame.com/contribute/view/43379dd82c3d9ac24ac2b9eb3cf8868ddf4f8)
+* [Le bon vieux françés](./clash/french) - [Contribution page](https://www.codingame.com/contribute/view/43379dd82c3d9ac24ac2b9eb3cf8868ddf4f8)
 * [String primes](./clash/string-primes) - [Contribution page](https://www.codingame.com/contribute/view/41661416a26fca8dc6d6de2edf9bc7addc318)
 * [Name sort](./clash/namesort) - [Contribution page](https://www.codingame.com/contribute/view/40772d3102acd1dfe76e3dc05b59a34c24014)
 * [Hollerith string](./clash/hollerith) - [Contribution page](https://www.codingame.com/contribute/view/36151a029b6cad971b52d02bfbd8f560e54ad)
