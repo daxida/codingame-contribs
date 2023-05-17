@@ -5,7 +5,7 @@ Tests generators and solutions for my CodinGame contributions.
 * [Crazy eights](./crazy-eights) - [Contribution page](https://www.codingame.com/contribute/view/56511956a5b4169dca1558a19400027bbc134) 
 * [Fix the spaces](./fix-the-spaces) - [Contribution page](https://www.codingame.com/contribute/view/46053956831b4324bf2a6e36521916e52a727) - [Puzzle page](https://www.codingame.com/training/medium/fix-the-spaces)
 * [Library dependencies](./library-dependencies) - [Contribution page](https://www.codingame.com/contribute/view/439391d1962cacc9a04e76f932b8fc7f43816) - [Puzzle page](https://www.codingame.com/training/medium/library-dependencies)
-* [Grid climbing](./grid-climbing) - [Contribution page](https://www.codingame.com/contribute/view/29649c6f594e71b69c8ca2567c8acfa06e207) - Puzzle page (Not validated yet)
+* [Grid climbing](./grid-climbing) - [Contribution page](https://www.codingame.com/contribute/view/29649c6f594e71b69c8ca2567c8acfa06e207) - [Puzzle page](https://www.codingame.com/training/hard/grid-climbing)
 * [Learning words](./learning-words) - [Contribution page](https://www.codingame.com/contribute/view/537069161bfbd37abe5eb74fa5af5f44ef652) - Puzzle page (Not validated yet)
 * [Markov ants](./markov-ants) - [Contribution page](https://www.codingame.com/contribute/view/216638ec81ba9a5dd2105b22ad2de62d3e2df) - Puzzle page (Not validated yet)
 * [Euclid-complex](./euclid-complex) - [Contribution page](https://www.codingame.com/contribute/view/52518e3c281414497c4f1f13bc85c49c42785) - Puzzle page (Not validated yet)
