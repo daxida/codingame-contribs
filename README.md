@@ -2,6 +2,7 @@
 Tests generators and solutions for my CodinGame contributions.
 
 # Puzzles
+* [Nickname filtering](./nickname-filtering) - [Contribution page](https://www.codingame.com/contribute/view/5832652f1a152c2fe38e96f41c636aeab13e2) 
 * [Crazy eights](./crazy-eights) - [Contribution page](https://www.codingame.com/contribute/view/56511956a5b4169dca1558a19400027bbc134) 
 * [Fix the spaces](./fix-the-spaces) - [Contribution page](https://www.codingame.com/contribute/view/46053956831b4324bf2a6e36521916e52a727) - [Puzzle page](https://www.codingame.com/training/medium/fix-the-spaces)
 * [Library dependencies](./library-dependencies) - [Contribution page](https://www.codingame.com/contribute/view/439391d1962cacc9a04e76f932b8fc7f43816) - [Puzzle page](https://www.codingame.com/training/medium/library-dependencies)
