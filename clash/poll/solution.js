@@ -3,7 +3,7 @@
 const throttle = function (fn, t) {
     const users = new Map();
   
-    return function (vote, time, id) {
+    return function (id, vote, time) {
         if (time - users.get(id) < t) return;
 
         users.set(id, time);
@@ -19,8 +19,8 @@ const tally = (vote) => counter[vote] += 1;
 const throttledTally = throttle(tally, timeout);
 
 for (let i = 0; i < nEntries; i++) {
-    const [vote, time, id] = readline().split(" ").map(Number);
-    throttledTally(vote, time, id);
+    const [id, vote, time] = readline().split(" ").map(Number);
+    throttledTally(id, vote, time);
 }
 
 console.log(counter.join(" "));
