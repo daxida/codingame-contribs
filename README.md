@@ -11,7 +11,7 @@ Tests generators and solutions for my CodinGame contributions.
 * [Markov ants](./markov-ants) - [Contribution page](https://www.codingame.com/contribute/view/216638ec81ba9a5dd2105b22ad2de62d3e2df) - Puzzle page (Not validated yet)
 * [Euclid-complex](./euclid-complex) - [Contribution page](https://www.codingame.com/contribute/view/52518e3c281414497c4f1f13bc85c49c42785) - Puzzle page (Not validated yet)
 * [Coprime sequence] - [Contribution page](https://www.codingame.com/contribute/view/50703f8ba46dd4c2eef6629d8d867f14527ed) - Puzzle page (Not validated yet)
-* [String balls] - [Contribution page](https://www.codingame.com/contribute/view/388573d78acaeca9e34861401284ecfbe5447) - Puzzle page (Not validated yet)
+* [String balls](./string-balls) - [Contribution page](https://www.codingame.com/contribute/view/388573d78acaeca9e34861401284ecfbe5447) - Puzzle page (Not validated yet)
 
 # Clashes
 * [Le bon vieux françés](./clash/french) - [Contribution page](https://www.codingame.com/contribute/view/43379dd82c3d9ac24ac2b9eb3cf8868ddf4f8)
