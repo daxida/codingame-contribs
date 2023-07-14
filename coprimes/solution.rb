@@ -2,6 +2,7 @@
 # https://en.wikipedia.org/wiki/Held%E2%80%93Karp_algorithm
 # https://codeforces.com/blog/entry/337
 # https://atcoder.jp/contests/abc301/tasks/abc301_e
+# https://atcoder.jp/contests/abc274/tasks/abc274_e
 
 n = gets.to_i
 xs = gets.split.map(&:to_i).sort
