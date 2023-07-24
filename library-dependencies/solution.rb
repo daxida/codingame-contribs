@@ -1,97 +1,64 @@
 require 'tsort'
 
-def E(*args)
-  warn "DEB: #{args.inspect}"
+class MaxArray < Array
+  def <<(v)
+    idx = bsearch_index { _1 >= v } || size
+    insert(idx, v)
+  end
 end
+
+def die(msg); puts msg; exit end
 
 def compiled?(deps)
-  compiled = []
-  deps.each do |lib, _deps|
-    _deps.each do |dep|
-      unless compiled.include? dep
-        puts "Import error: tried to import #{lib} but #{dep} is required."
-        return false
-      end
-    end
+  deps.each.with_object([]) do |(lib, _deps), compiled|
+    next compiled << lib unless dep = _deps.find { |dep| !compiled.include? dep }
 
-    compiled << lib
+    puts "Import error: tried to import #{lib} but #{dep} is required."
+    return
   end
 
-  puts "Compiled successfully!"
-  true
+  die "Compiled successfully!"
 end
 
-deps = gets.to_i.times.map {
+deps = gets.to_i.times.map do
   lib = gets.chomp.gsub("import ", "")
   [lib, []]
-}.to_h
+end.to_h
 
 gets.to_i.times do
   lib, _deps = gets.chomp.split(" requires ")
   deps[lib] = _deps.split(", ")
 end
 
-warn deps.inspect
+compiled?(deps)
 
-$out = []
+# Tarjans just for cycles. Couldn't find a way to make it work
+# for building the reordering. Completely unneeded, but I just
+# wanted to explore the module
+
+# https://ruby-doc.org/stdlib-2.6.1/libdoc/tsort/rdoc/TSort.html
 class Hash
   include TSort
-
-  # def each_item
-  #   return unless @state
-
-  #   item = @state.head
-  #   while item
-  #     yield item
-  #     item = item.next
-  #   end
-  # end
-
-  # def each_key_bis
-  #   return to_enum(:each_key) { size } unless block_given?
-
-  #   E "TEST", self
-
-  #   each_item { |e| yield e.key }
-
-  #   self
-  # end
-
-  alias each_key_bis each_key
-
-  def each_key(&block)
-    E 'hi'
-    # can't modify self
-    # self = self.sort_by { |k, v| [k, (v - $out).size] }.to_h
-    each_key_bis(&block)
-  end
-
   alias tsort_each_node each_key
-  # def tsort_each_node(&block)
-  #   warn $out.inspect
-  #   warn self
-  #   warn find { |k, v| (v - $out).size == 0 }
-  #   find { |k, v| (v - $out).size == 0 }
-  # end
-
   def tsort_each_child(node, &block)
-    warn node, node.class
-    $out << node
     fetch(node).each(&block)
   end
 end
 
-unless compiled?(deps)
-  begin
-    warn deps
-    warn deps.sort.to_h
-    warn deps.sort_by { |k, v| [v.size, k] }.to_h
-    reordering = deps.sort.to_h.tsort
-    puts "Suggest to change import order:"
-    reordering.each { |lib| puts "import #{lib}" }
-  rescue TSort::Cyclic
-    puts "Fatal error: interdependencies."
+deps.tsort rescue die "Fatal error: interdependencies."
+
+# Custom max heap
+h = MaxArray.new(deps.filter_map { |k, v| k if v.empty? }.sort)
+record = []
+
+while !h.empty?
+  record << lib = h.shift
+  deps.each do |other, _deps|
+    _deps.delete(lib) if _deps.include? lib
+    next unless _deps.empty? && !h.include?(other) && !record.include?(other)
+
+    h << other
   end
 end
 
-warn deps.strongly_connected_components.inspect
+puts "Suggest to change import order:", record.map { "import #{_1}" }
