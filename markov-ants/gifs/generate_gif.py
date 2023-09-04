@@ -8,7 +8,7 @@ from natsort import natsorted
 # Number of pixels from the center of the square to the edge
 # Change this to modify the size of the square
 # Needs to be odd
-n_pixels = 15
+n_pixels = 11
 
 CUR_PATH = os.getcwd()
 # Where the pngs are going to be stored prior to building the GIF
@@ -118,7 +118,7 @@ def generate_frames_array(n_pixels: int):
 
         new_frame[x, y] = RED
 
-        rand = random.randrange(0, 3)
+        rand = random.randrange(0, 4)
         if rand == 0:
             y += 1
         elif rand == 1:
