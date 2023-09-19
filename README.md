@@ -15,7 +15,7 @@ Tests generators and solutions for my CodinGame contributions.
 * [Markov ants](./markov-ants) - [Contribution page](https://www.codingame.com/contribute/view/216638ec81ba9a5dd2105b22ad2de62d3e2df) - Puzzle page
 
 # Clashes
-* [Conjectuer] - [Contribution page](https://www.codingame.com/contribute/view/7040402a6fe461068f5cf5296607c184d043a)
+* [Conjecture] - [Contribution page](https://www.codingame.com/contribute/view/7040402a6fe461068f5cf5296607c184d043a)
 * [Codons] - [Contribution page](https://www.codingame.com/contribute/view/700438e1d37d9c816b05acdd59782dddbbfef)
 * [Secretary problem](./clash/secretary-problem) - [Contribution page](https://www.codingame.com/contribute/view/604712d9661c87c342f9ab9013d35c76068ea)
 * [Poll](./clash/poll) - [Contribution page](https://www.codingame.com/contribute/view/59613d02d032fc416f1cbadb39dc79d271194)
