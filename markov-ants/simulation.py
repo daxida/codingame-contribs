@@ -1,44 +1,26 @@
-# by user @Flaaamort
+import random
 
-import numpy
-import sys
+DIRS = [(-1, 0), (0, 1), (0, -1), (1, 0)]
 
-
-def log(*args):
-    print(*args, file=sys.stderr)
-
-
-def solve(width, height, x, y, step):
-    position = numpy.full((width, height), 0.0)
-    position[x, y] = 1.0
-
-    average_time = 0
-
-    for time in range(1, 100):
-        position_ = numpy.full(position.shape, 0.0)
-        position_[step:,:] += position[:-step,:]
-        position_[:-step,:] += position[step:,:]
-        position_[:,step:] += position[:,:-step]
-        position_[:,:-step] += position[:,step:]
-        position_ /= 4
-
-        average_time += (position.sum() - position_.sum()) * time
-        position = position_
+step = int(input())
+w, h = [int(i) for i in input().split()]
+g    = [input() for _ in range(h)]
+start = [(x, y) for y in range(h) for x in range(w) if g[y][x] == "A"]
 
 
-    return average_time
+def montecarlo(start):
+    iters = 2 * 10 ** 5
+    time = 0
+    for _ in range(iters):
+        x, y = start[0]
+        while 0 < y < h - 1 and 0 < x < w - 1:
+            dy, dx = DIRS[random.randint(0, 3)]
+            y += dy * step
+            x += dx * step
+            time += 1
+
+    return time / iters
 
 
-def main():
-    step = int(input())
-    width, height = map(int, input().split())
-    grid = ''.join(input() for _ in range(height))
-
-    start_y, start_x = divmod(grid.index('A'), width)
-
-    average_time = solve(width-2, height-2, start_x-1, start_y-1, step)
-    print(f"{average_time:.1f}")
-
-
-if __name__ == "__main__":
-    main()
+ans = montecarlo(start)
+print(f'{ans:.1f}')
