@@ -12,7 +12,7 @@ Tests generators and solutions for my CodinGame contributions.
 * [Library dependencies](./library-dependencies) - [Contribution page](https://www.codingame.com/contribute/view/439391d1962cacc9a04e76f932b8fc7f43816) - [Puzzle page](https://www.codingame.com/training/medium/library-dependencies)
 * [String balls](./string-balls) - [Contribution page](https://www.codingame.com/contribute/view/388573d78acaeca9e34861401284ecfbe5447) - [Puzzle page](https://www.codingame.com/training/medium/string-balls)
 * [Grid climbing](./grid-climbing) - [Contribution page](https://www.codingame.com/contribute/view/29649c6f594e71b69c8ca2567c8acfa06e207) - [Puzzle page](https://www.codingame.com/training/hard/grid-climbing)
-* [Markov ants](./markov-ants) - [Contribution page](https://www.codingame.com/contribute/view/216638ec81ba9a5dd2105b22ad2de62d3e2df) - Puzzle page
+* [Markov ants](./markov-ants) - [Contribution page](https://www.codingame.com/contribute/view/216638ec81ba9a5dd2105b22ad2de62d3e2df) - [Puzzle page](https://www.codingame.com/training/medium/markov-ants)
 
 # Clashes
 * [Conjecture] - [Contribution page](https://www.codingame.com/contribute/view/7040402a6fe461068f5cf5296607c184d043a)
