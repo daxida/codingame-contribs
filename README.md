@@ -1,6 +1,3 @@
-# CodinGame-contributions
-Tests generators and solutions for my CodinGame contributions.
-
 # Puzzles
 * [Function notation](./function-notation) - [Contribution page](https://www.codingame.com/contribute/view/67467b18360c683de95549e76097154928a90)
 * [Ruby parsing](./ruby-parsing) - [Contribution page](https://www.codingame.com/contribute/view/6251794e1491f5d392a7a064773157491ba4a)
