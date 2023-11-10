@@ -9,8 +9,8 @@ def gen_seq(s)
   [length, s.last]
 end
 
-MAX_N = 10
-MAX_X = 100000
+MAX_N = 20
+MAX_X = 50
 
 n = rand(1...MAX_N)
 s = Array.new(n) { rand(1...MAX_X) }
