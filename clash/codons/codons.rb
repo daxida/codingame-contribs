@@ -1,44 +1,38 @@
-# https://www.codingame.com/contribute/view/7443038a912b5b5160da748d4f6917b4452a2
+# https://en.wikipedia.org/wiki/DNA_and_RNA_codon_tables
 
+COD = Hash[*DATA.to_a.join.split]
 START = "AUG"
 ENDS = ["UAA", "UAG", "UGA"]
 
 def solve(s)
-  s += "@@" # padding
-  ans = ""
-  opn = false
-  cooldown = 0
-  s.chars.each_cons(3) do |pattern|
-    pat = pattern.join
-    cooldown -= 1 if cooldown > 0
-    next if cooldown > 0
-
-    if !opn && pat == START
-      opn = true
-      ans += pat
-      cooldown = 3
-    elsif opn && ENDS.include?(pat)
-      opn = false
-      ans += pat
-      cooldown = 3
-    elsif opn
-      ans += pattern[0]
-    else
-      ans += "."
+  ans = []
+  i = 0
+  while i < s.size - 2
+    while i < s.size - 2 && s[i, 3] != "AUG"
+      i += 1
     end
+
+    cur = []
+    cur << COD[s[i, 3]]
+    while i < s.size - 2
+      i += 3
+      cur << COD[s[i, 3]]
+
+      if ENDS.include?(s[i, 3])
+        i += 3
+        break
+      end
+    end
+
+    if i < s.size - 2 && cur.last != "Stop"
+      puts "ERROR: sequence not ending in a stop, #{cur}"
+    end
+    cur.pop
+
+    ans << cur.join if cur.size > 0
   end
 
   ans
-end
-
-# Because the test generator is faulty
-def verify_ending(rna_modified)
-  rna_modified.split(".").all? do |active|
-    # this happens if the string starts/ends with "."
-    next true if active.empty?
-
-    active.scan(/AUG.*(UAA|UAG|UGA)/).any?
-  end
 end
 
 n_tests = gets.to_i
@@ -47,16 +41,71 @@ n_tests.times do |i|
   rna = gets.chomp
   ans = solve(rna)
 
-  # DEBUG
-  if ans.size != rna.size
-    puts "Error at line #{i}:"
-    puts "#{" "*padding} #{rna}"
-  end
-  # puts ["%0#{padding}d" % i, ans] * " "
-  unless verify_ending(ans)
-    puts "Unending active substring"
-    puts rna
-  end
-
-  puts ans
+  puts ans.join("-")
 end
+
+__END__
+UUU F
+CUU L
+AUU I
+GUU V
+UUC F
+CUC L
+AUC I
+GUC V
+UUA L
+CUA L
+AUA I
+GUA V
+UUG L
+CUG L
+AUG M
+GUG V
+UCU S
+CCU P
+ACU T
+GCU A
+UCC S
+CCC P
+ACC T
+GCC A
+UCA S
+CCA P
+ACA T
+GCA A
+UCG S
+CCG P
+ACG T
+GCG A
+UAU Y
+CAU H
+AAU N
+GAU D
+UAC Y
+CAC H
+AAC N
+GAC D
+UAA Stop
+CAA Q
+AAA K
+GAA E
+UAG Stop
+CAG Q
+AAG K
+GAG E
+UGU C
+CGU R
+AGU S
+GGU G
+UGC C
+CGC R
+AGC S
+GGC G
+UGA Stop
+CGA R
+AGA R
+GGA G
+UGG W
+CGG R
+AGG R
+GGG G

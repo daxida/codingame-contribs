@@ -1,37 +1,62 @@
-# https://www.codingame.com/contribute/view/700438e1d37d9c816b05acdd59782dddbbfef
+# https://www.codingame.com/contribute/view/7443038a912b5b5160da748d4f6917b4452a2
 
-h = 7
-w = 5
-charset = "AUCG".chars
-rna = Array.new(h) { Array.new(w) { charset.sample }.join }
+START = "AUG"
+ENDS = ["UAA", "UAG", "UGA"]
 
-puts h
-puts w
-puts rna
-puts 
+def solve(s)
+  s += "@@" # padding
+  ans = ""
+  opn = false
+  cooldown = 0
+  s.chars.each_cons(3) do |pattern|
+    pat = pattern.join
+    cooldown -= 1 if cooldown > 0
+    next if cooldown > 0
 
-to_delete_idxs_row = []
-rna.each_with_index do |row, y|
-  idx = row =~ /AUG/ || w
-  (0...idx).each do |x|
-    to_delete_idxs_row << [y, x]
+    if !opn && pat == START
+      opn = true
+      ans += pat
+      cooldown = 3
+    elsif opn && ENDS.include?(pat)
+      opn = false
+      ans += pat
+      cooldown = 3
+    elsif opn
+      ans += pattern[0]
+    else
+      ans += "."
+    end
+  end
+
+  ans
+end
+
+# Because the test generator is faulty
+def verify_ending(rna_modified)
+  rna_modified.split(".").all? do |active|
+    # this happens if the string starts/ends with "."
+    next true if active.empty?
+
+    active.scan(/AUG.*(UAA|UAG|UGA)/).any?
   end
 end
 
-to_delete_idxs_col = []
-rna.map(&:chars).transpose.each_with_index do |col, x|
-  idx = col.join =~ /AUG/ || h
-  (0...idx).each do |y|
-    to_delete_idxs_col << [y, x]
+n_tests = gets.to_i
+padding = (n_tests - 1).to_s.size
+n_tests.times do |i|
+  rna = gets.chomp
+  ans = solve(rna)
+
+  # DEBUG
+  if ans.size != rna.size
+    puts "Error at line #{i}:"
+    puts "#{" "*padding} #{rna}"
   end
-end
+  # puts ["%0#{padding}d" % i, ans] * " "
+  unless verify_ending(ans)
+    puts "Unending active substring"
+    puts rna
+  end
 
-to_delete_idxs = to_delete_idxs_row & to_delete_idxs_col
-
-rna.each_with_index do |row, y|
-  nrow = row.chars.each_with_index.map do |ch, x|
-    to_delete_idxs.include?([y, x]) ? "." : ch
-  end.join
-
-  puts nrow
+  puts ans
 end
