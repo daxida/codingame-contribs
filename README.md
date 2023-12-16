@@ -12,6 +12,7 @@
 * [Markov ants](./puzzles/markov-ants) - [Contribution](https://www.codingame.com/contribute/view/216638ec81ba9a5dd2105b22ad2de62d3e2df) - [Puzzle](https://www.codingame.com/training/medium/markov-ants)
 
 # Clashes
+* [Longest snake](./clashes/longest-snake) - [Contribution](https://www.codingame.com/contribute/view/745622814caf0e629ed827ff72b44439500cc)
 * [Conjecture](./clashes/conjecture) - [Contribution](https://www.codingame.com/contribute/view/7040402a6fe461068f5cf5296607c184d043a)
 * [Codons](./clashes/codons) - [Contribution](https://www.codingame.com/contribute/view/700438e1d37d9c816b05acdd59782dddbbfef)
 * [Secretary problem](./clashes/secretary-problem) - [Contribution](https://www.codingame.com/contribute/view/604712d9661c87c342f9ab9013d35c76068ea)
