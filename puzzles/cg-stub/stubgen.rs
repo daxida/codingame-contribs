@@ -1,3 +1,5 @@
+#![allow(clippy::while_let_on_iterator)]
+
 use std::io;
 use std::io::Read;
 
@@ -15,6 +17,16 @@ impl StubGen {
             statement: String::new(),
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum T {
+    Int,
+    Float,
+    Long,
+    Bool,
+    Word { max_length: String },
+    String { max_length: String },
 }
 
 #[derive(Debug, Clone)]
@@ -50,14 +62,38 @@ fn apply_case_vars(vars: &[Var], case_fun: fn(&str) -> String) -> Vec<Var> {
     vars.iter().map(|var| var.apply_case_var(case_fun)).collect()
 }
 
-#[derive(Debug, Clone)]
-pub enum T {
-    Int,
-    Float,
-    Long,
-    Bool,
-    Word { max_length: usize },
-    String { max_length: usize },
+#[derive(Clone, Debug)]
+pub enum LengthType {
+    Number,
+    Variable,
+}
+
+impl<'a> From<&'a str> for LengthType {
+    fn from(value: &'a str) -> Self {
+        match value.parse::<usize>() {
+            Ok(_) => Self::Number,
+            Err(_) => Self::Variable,
+        }
+    }
+}
+
+// JoinTerms
+#[derive(Clone, Debug)]
+pub enum JoinTermType {
+    Literal,
+    Variable,
+}
+
+#[derive(Clone, Debug)]
+pub struct JoinTerm {
+    pub name: String,
+    pub term_type: JoinTermType,
+}
+
+impl JoinTerm {
+    pub fn new(name: String, term_type: JoinTermType) -> Self {
+        Self { name, term_type }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -67,6 +103,7 @@ pub enum Cmd {
     LoopLine { count_var: String, vars: Vec<Var> },
     // output_text is the text associated by the OUTPUT statement
     Write { text: String, output_comment: String },
+    WriteJoin(Vec<JoinTerm>),
 }
 
 impl Cmd {
@@ -90,6 +127,19 @@ impl Cmd {
                 count_var: case_fun(object),
                 vars: apply_case_vars(vars, case_fun),
             },
+            Cmd::WriteJoin(join_terms) => Cmd::WriteJoin(
+                join_terms
+                    .iter()
+                    .map(|term| match term.term_type {
+                        // Only apply casing to variables and not literals
+                        JoinTermType::Variable => JoinTerm {
+                            name: case_fun(&term.name),
+                            term_type: term.term_type.clone(),
+                        },
+                        JoinTermType::Literal => term.clone(),
+                    })
+                    .collect(),
+            ),
             other => other.clone(),
         }
     }
@@ -108,11 +158,11 @@ pub struct Keywords {
 }
 
 impl Keywords {
-    fn interpolate_write(&self, msg: &String) -> String {
+    fn interpolate_write(&self, msg: &str) -> String {
         format!("{}(\"{}\")", self.write, msg)
     }
 
-    fn interpolate_forloop(&self, loop_var: &char, iter: String) -> String {
+    fn interpolate_forloop(&self, loop_var: &str, iter: String) -> String {
         format!("{} {} {} {}:", self.forloop_forword, loop_var, self.forloop_inword, iter)
     }
 }
@@ -134,8 +184,8 @@ struct Lang<'a> {
     keywords: Keywords,
 }
 
-const ALPHABET: [char; 18] = [
-    'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+const ALPHABET: [&str; 18] = [
+    "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
 ];
 
 impl<'a> Lang<'a> {
@@ -220,6 +270,7 @@ impl<'a> Lang<'a> {
                 vars,
             } => self.loopline_to_s(object, vars, loop_count_level),
             Cmd::Write { text, output_comment } => self.write_to_s(text, output_comment),
+            Cmd::WriteJoin(join_terms) => self.write_join_to_s(join_terms),
         }
     }
 
@@ -278,7 +329,7 @@ impl<'a> Lang<'a> {
     fn loop_to_s(&self, max_count: &String, inner_cmd: &Cmd, loop_count_level: usize, arg: String) -> String {
         let loop_var = ALPHABET[loop_count_level];
         let iter = format!("range({})", max_count);
-        let forloop = self.keywords.interpolate_forloop(&loop_var, iter);
+        let forloop = self.keywords.interpolate_forloop(loop_var, iter);
         match inner_cmd {
             Cmd::Read(read_cmds) => {
                 // 2 cases, either only one command or more than one
@@ -307,7 +358,12 @@ impl<'a> Lang<'a> {
                 let indented_inner_write_py = indent(inner_write_py, &self.indent);
                 format!("{}\n{}\n", forloop, indented_inner_write_py)
             }
-            Cmd::LoopLine { .. } => panic!("Loopline inside loop"),
+            Cmd::LoopLine { .. } => {
+                let inner_loopline_py = self.cmd_to_s(inner_cmd, loop_count_level + 1, arg);
+                let indented_inner_loopline_py = indent(inner_loopline_py, &self.indent);
+                format!("{}\n{}\n", forloop, indented_inner_loopline_py)
+            }
+            Cmd::WriteJoin(_) => todo!(),
         }
     }
 
@@ -316,13 +372,21 @@ impl<'a> Lang<'a> {
 
         match vars.as_slice() {
             [] => panic!("Empty vector at loopline_to_s"),
-            [single_var] => {
-                let iter = "input().split()".to_string();
-                let forloop = self.keywords.interpolate_forloop(&loop_var, iter);
-                let assignment = self.var_to_assignment(single_var, loop_var.to_string(), true);
-                let indented_assingment = indent(assignment, &self.indent);
-                format!("{}\n{}\n", forloop, indented_assingment)
-            }
+            [single_var] => match single_var.t {
+                // Special case when it's a word
+                T::Word { .. } => {
+                    let iter = "input().split()".to_string();
+                    let forloop = self.keywords.interpolate_forloop(&single_var.name, iter);
+                    format!("{}\n{}pass\n", forloop, &self.indent)
+                }
+                _ => {
+                    let iter = "input().split()".to_string();
+                    let forloop = self.keywords.interpolate_forloop(loop_var, iter);
+                    let assignment = self.var_to_assignment(single_var, loop_var.to_string(), true);
+                    let indented_assingment = indent(assignment, &self.indent);
+                    format!("{}\n{}\n", forloop, indented_assingment)
+                }
+            },
             // Loopline with multiple arguments
             _ => {
                 // INPUT comments: they come AT THE TOP.
@@ -332,7 +396,7 @@ impl<'a> Lang<'a> {
                 }
 
                 let iter = format!("range({})", object);
-                let forloop = self.keywords.interpolate_forloop(&loop_var, iter);
+                let forloop = self.keywords.interpolate_forloop(loop_var, iter);
                 let split_input = "inputs = input().split()".to_string();
                 let length = vars.len();
                 let inner_split: String = vars
@@ -370,15 +434,28 @@ impl<'a> Lang<'a> {
         // Deals with write word1\nword2
         let write_py = msg
             .split('\n')
-            .map(|line| {
-                let msg = line.trim_end().to_string();
-                let write_py_line = self.keywords.interpolate_write(&msg);
-                write_py_line.to_string()
-            })
-            .collect::<Vec<String>>()
+            .map(|line| self.keywords.interpolate_write(line.trim()).to_string())
+            .collect::<Vec<_>>()
             .join("\n");
 
         format!("{}{}\n", commented_output_text, write_py)
+    }
+
+    fn write_join_to_s(&self, join_terms: &[JoinTerm]) -> String {
+        // TODO: comments
+
+        let write_py: String = join_terms
+            .iter()
+            .map(|t| match t.term_type {
+                JoinTermType::Variable => format!("str({})", &t.name),
+                JoinTermType::Literal => format!("\"{}\"", &t.name),
+            })
+            .collect::<Vec<_>>()
+            .join(" + \" \" + ")
+            // Hack to merge string literals
+            .replace("\" + \"", "");
+
+        format!("print({})\n", write_py)
     }
 
     // This can't be hardcorded
@@ -472,19 +549,20 @@ where
         }
     }
 
+    #[rustfmt::skip]
     fn parse(&mut self) -> StubGen {
         let mut stub_gen = StubGen::new();
 
         while let Some(token) = self.stream.next() {
             match token {
-                "read" => stub_gen.commands.push(self.parse_read()),
-                "write" => stub_gen.commands.push(self.parse_write()),
-                "loop" => stub_gen.commands.push(self.parse_loop()),
-                "loopline" => stub_gen.commands.push(self.parse_loopline()),
-                "OUTPUT" => self.parse_output_comment(&mut stub_gen.commands),
-                "INPUT" => self.parse_input_comment(&mut stub_gen),
+                "read"      => stub_gen.commands.push(self.parse_read()),
+                "write"     => stub_gen.commands.push(self.parse_write()),
+                "loop"      => stub_gen.commands.push(self.parse_loop()),
+                "loopline"  => stub_gen.commands.push(self.parse_loopline()),
+                "OUTPUT"    => self.parse_output_comment(&mut stub_gen.commands),
+                "INPUT"     => self.parse_input_comment(&mut stub_gen),
                 "STATEMENT" => stub_gen.statement = self.parse_statement(),
-                "\n" | "" => continue,
+                "\n" | ""   => continue,
                 thing => panic!("Unknown token stub generator: {}", thing),
             };
         }
@@ -496,8 +574,117 @@ where
         Cmd::Read(self.parse_variable_list())
     }
 
-    fn parse_message(&mut self) -> String {
+    fn parse_write(&mut self) -> Cmd {
         let mut output: Vec<String> = Vec::new();
+        let mut first_line = true;
+
+        while let Some(token) = self.stream.next() {
+            // eprintln!("Parse write token: {}", token);
+            let next_token = match token {
+                "\n" => {
+                    first_line = false;
+                    match self.stream.next() {
+                        Some("\n") | None => break,
+                        Some(str) => format!("\n{}", str),
+                    }
+                }
+                // Note that: write•join()•rest⏎, with NOTHING inside the parens,
+                // gets parsed as a write and not as a write_join
+                join if join.starts_with("join(") && !join.starts_with("join()") && first_line => {
+                    return self.parse_write_join(join)
+                }
+                other => String::from(other),
+            };
+
+            output.push(next_token);
+        }
+
+        Cmd::Write {
+            text: output.join(" "),
+            output_comment: String::new(),
+        }
+    }
+
+    // Note that there is no nesting here
+    fn parse_write_join(&mut self, start: &str) -> Cmd {
+        let mut raw_vec = vec![start];
+
+        while let Some(token) = self.stream.next() {
+            match token {
+                "\n" => {
+                    if start.contains(')') {
+                        // write•join("a")⏎ is a valid join
+                        let terms = Self::parse_write_join_inner(start);
+                        return Cmd::WriteJoin(terms)
+                    } else {
+                        // write•join(⏎ gets parsed as a raw_string
+                        return Cmd::Write {
+                            text: raw_vec.join(" "),
+                            output_comment: String::new(),
+                        }
+                    }
+                }
+                last_term if last_term.contains(')') => {
+                    raw_vec.push(last_term);
+                    break;
+                }
+                regular_term => {
+                    raw_vec.push(regular_term);
+                }
+            }
+        }
+
+        self.skip_to_next_line();
+
+        let raw_string = raw_vec.join(" ");
+        let terms = Self::parse_write_join_inner(&raw_string);
+
+        // write•join("hi",,,•"Jim")⏎ should be rendered as a Write Cmd
+        // (I guess the original parser fails a previous command due to consecutive commas)
+        // We have no way to know if they are multiple commas until we call parse_write_join.
+        // NOTE: maybe this fails at write•join("hi"•,•,•,•"Jim")?
+        if terms.iter().any(|jt| jt.name.is_empty()) {
+            return Cmd::Write {
+                text: raw_vec.join(" "),
+                output_comment: String::new(),
+            }
+        }
+
+        Cmd::WriteJoin(terms)
+    }
+
+    fn parse_write_join_inner(inner: &str) -> Vec<JoinTerm> {
+        let terms_finder = Regex::new(r"join\(([^)]*)\)").unwrap();
+        let terms_string_captures = terms_finder.captures(inner);
+        let terms_string = terms_string_captures.unwrap().get(1).unwrap().as_str();
+        let term_splitter = Regex::new(r",\s*").unwrap();
+
+        term_splitter
+            .split(terms_string)
+            .map(|term_str| {
+                let literal_matcher = Regex::new("\\\"([^)]+)\\\"").unwrap();
+                if let Some(mtch) = literal_matcher.captures(term_str) {
+                    JoinTerm::new(mtch.get(1).unwrap().as_str().to_owned(), JoinTermType::Literal)
+                } else {
+                    // let var_type = Self::find_variable_type( .. );
+                    JoinTerm::new(term_str.to_owned(), JoinTermType::Variable)
+                }
+            })
+            .collect()
+    }
+
+    // Recursively try to find the previous read Command for the current Variable
+    // This is relevant because if the variable is a str, then we don't need to wrap it into str()
+    // F.ex:
+    //   read var:string(10)
+    //   write join(var, "b")
+    // Should return print(var + " b") and not print(str(var) + " b")
+    fn _find_variable_type() {
+        todo!()
+    }
+
+    fn parse_text_block(&mut self) -> String {
+        let mut text_block: Vec<String> = Vec::new();
 
         while let Some(token) = self.stream.next() {
             let next_token = match token {
@@ -507,30 +694,32 @@ where
                 },
                 other => String::from(other),
             };
-            output.push(next_token);
+            text_block.push(next_token);
         }
 
         // Hacky - The replace is due to the "replace hacks" at generator
-        // so that ["you", "\ndown"] -> you\ndown
-        output.join(" ").replace(" \n", "\n").as_str().trim().to_string()
-    }
-
-    fn parse_write(&mut self) -> Cmd {
-        Cmd::Write {
-            text: self.parse_message(),
-            output_comment: String::new(),
-        }
+        // so that ["you", "\ndown"] -> you\ndown ...
+        // while trimming spaces both sides of each line
+        text_block
+            .join(" ")
+            .replace(" \n", "\n")
+            .split('\n')
+            .map(|line| line.trim())
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 
     fn parse_statement(&mut self) -> String {
-        // Ignore current line
-        for token in self.stream.by_ref() {
+        self.skip_to_next_line();
+        self.parse_text_block()
+    }
+
+    fn skip_to_next_line(&mut self) {
+        while let Some(token) = self.stream.next() {
             if token == "\n" {
                 break
             }
         }
-
-        self.parse_message()
     }
 
     fn parse_output_comment(&mut self, previous_commands: &mut [Cmd]) {
@@ -540,7 +729,6 @@ where
         }
     }
 
-    // Recursively update previous write cmds with the current comment
     fn update_cmd_with_output_comment(cmd: &mut Cmd, new_comment: &str) {
         match cmd {
             Cmd::Write {
@@ -696,26 +884,36 @@ where
     }
 
     fn parse_loop(&mut self) -> Cmd {
-        let count = match self.stream.next() {
-            Some("\n") | None => panic!("Loop stub not provided with loop count"),
-            Some(other) => String::from(other),
-        };
-        let command = self.parse_read_or_write(); // nor really, also loop
-        Cmd::Loop {
-            count_var: count,
-            inner_cmd: command,
+        match self.next_past_newline() {
+            Some("\n") => panic!("Could not find count identifier for loop"),
+            None => panic!("Unexpected end of input: Loop stub not provided with loop count"),
+            Some(other) => Cmd::Loop {
+                count_var: String::from(other),
+                inner_cmd: Box::new(self.parse_loopable()),
+            },
+        }
+    }
+
+    fn parse_loopable(&mut self) -> Cmd {
+        match self.next_past_newline() {
+            Some("\n") => panic!("Loop not provided with command"),
+            Some("read") => self.parse_read(),
+            Some("write") => self.parse_write(),
+            Some("loopline") => self.parse_loopline(),
+            Some("loop") => self.parse_loop(),
+            Some(thing) => panic!("Error parsing loop command in stub generator, got: {}", thing),
+            None => panic!("Unexpected end of input, expecting command to loop through"),
         }
     }
 
     fn parse_loopline(&mut self) -> Cmd {
-        let object = match self.stream.next() {
-            Some("\n") | None => panic!("Loopline stub not provided with identifier to loop through"),
-            Some(other) => String::from(other),
-        };
-        let vars = self.parse_variable_list();
-        Cmd::LoopLine {
-            count_var: object,
-            vars,
+        match self.next_past_newline() {
+            Some("\n") => panic!("Could not find count identifier for loopline"),
+            None => panic!("Unexpected end of input: Loopline stub not provided with count identifier"),
+            Some(other) => Cmd::LoopLine {
+                count_var: other.to_string(),
+                vars: self.parse_variable_list(),
+            },
         }
     }
 
@@ -739,18 +937,19 @@ where
         let mut iter = token.split(':');
         let name = String::from(iter.next().unwrap());
         let var_type = iter.next().expect("Error in stub generator: missing type");
-        let length_regex = Regex::new(r"(word|string)\((\d+)\)").unwrap();
-        let length_captures = length_regex.captures(var_type);
         match var_type {
             "int" => Var::new(name, T::Int),
             "float" => Var::new(name, T::Float),
             "long" => Var::new(name, T::Long),
             "bool" => Var::new(name, T::Bool),
             _ => {
+                let length_regex = Regex::new(r"(word|string)\((\w+)\)").unwrap();
+                let length_captures = length_regex.captures(var_type);
                 let caps = length_captures
                     .unwrap_or_else(|| panic!("Failed to parse variable type for token: {}", &token));
                 let new_type = caps.get(1).unwrap().as_str();
-                let max_length: usize = caps.get(2).unwrap().as_str().parse().unwrap();
+                let length = caps.get(2).unwrap().as_str();
+                let max_length = String::from(length);
                 match new_type {
                     "word" => Var::new(name, T::Word { max_length }),
                     "string" => Var::new(name, T::String { max_length }),
@@ -760,16 +959,12 @@ where
         }
     }
 
-    fn parse_read_or_write(&mut self) -> Box<Cmd> {
-        let cmd = match self.stream.next() {
-            Some("loop") => self.parse_loop(),         // added
-            Some("loopline") => self.parse_loopline(), // added
-            Some("read") => self.parse_read(),
-            Some("write") => self.parse_write(),
-            Some(thing) => panic!("Error parsing loop command in stub generator, got: {}", thing),
-            None => panic!("Loop with no arguments in stub generator"),
-        };
-        Box::new(cmd)
+    fn next_past_newline(&mut self) -> Option<&'a str> {
+        match self.stream.next() {
+            Some("\n") => self.stream.next(),
+            Some("") => self.next_past_newline(),
+            token => token,
+        }
     }
 }
 
