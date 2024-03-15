@@ -347,16 +347,26 @@ impl<'a> Lang<'a> {
             [single_var] => match single_var.t {
                 // Special case when it's a word
                 T::Word { .. } => {
+                    // TODO: what happens if this gets an INPUT comment???
                     let iter = "input().split()".to_string();
                     let forloop = self.keywords.interpolate_forloop(&single_var.name, iter);
                     format!("{}\n{}pass\n", forloop, &self.indent)
                 }
                 _ => {
+                    // Comment comes AT THE TOP even if single var
                     let iter = "input().split()".to_string();
                     let forloop = self.keywords.interpolate_forloop(loop_var, iter);
-                    let assignment = self.var_to_assignment(single_var, loop_var, true);
+                    let assignment = self.var_to_assignment(single_var, loop_var, false);
                     let indented_assingment = indent(&assignment, &self.indent);
-                    format!("{}\n{}\n", forloop, indented_assingment)
+                    let comment = if single_var.input_comment.is_empty() {
+                        "".to_string()
+                    } else {
+                        format!(
+                            "{}{} {}: {}\n",
+                            &self.indent, self.single_line_comment, single_var.name, single_var.input_comment
+                        )
+                    };
+                    format!("{}\n{}{}\n", forloop, comment, indented_assingment)
                 }
             },
             // Loopline with multiple arguments
@@ -518,23 +528,23 @@ where
 
     #[rustfmt::skip]
     fn parse(&mut self) -> Stub {
-        let mut stub_gen = Stub::default();
+        let mut stub = Stub::default();
 
         while let Some(token) = self.stream.next() {
             match token {
-                "read"      => stub_gen.commands.push(self.parse_read()),
-                "write"     => stub_gen.commands.push(self.parse_write()),
-                "loop"      => stub_gen.commands.push(self.parse_loop()),
-                "loopline"  => stub_gen.commands.push(self.parse_loopline()),
-                "OUTPUT"    => self.parse_output_comment(&mut stub_gen.commands),
-                "INPUT"     => self.parse_input_comment(&mut stub_gen),
-                "STATEMENT" => stub_gen.statement = self.parse_statement(),
+                "read"      => stub.commands.push(self.parse_read()),
+                "write"     => stub.commands.push(self.parse_write()),
+                "loop"      => stub.commands.push(self.parse_loop()),
+                "loopline"  => stub.commands.push(self.parse_loopline()),
+                "OUTPUT"    => self.parse_output_comment(&mut stub.commands),
+                "INPUT"     => self.parse_input_comment(&mut stub),
+                "STATEMENT" => stub.statement = self.parse_statement(),
                 "\n" | ""   => continue,
                 thing => panic!("Unknown token stub generator: {}", thing),
             };
         }
 
-        stub_gen
+        stub
     }
 
     fn parse_read(&mut self) -> Cmd {
@@ -710,135 +720,85 @@ where
         }
     }
 
+    // Update banned words --
+    // A word is banned if at one point we had an INPUT assignation for a Var
+    // but that Var was not declared yet in the stub generator. Example:
+    //   INPUT
+    //   x: a label
+    //
+    //   read x:int
+    //
+    //   INPUT
+    //   x: another label
+    //
+    // This would not give, as could be expected
+    //   x = int(input())  # another label
+    // But
+    //   x = int(input())
     fn parse_input_comment(&mut self, stub_gen: &mut Stub) {
         // Here extract the significant pairs (Do with a hash eventually)
-        let input_comments: Vec<(String, String)> = self
-            .parse_statement()
+        let input_statement = self.parse_statement();
+        let input_comment_pairs: Vec<(&str, &str)> = input_statement
             .lines()
             .filter(|line| line.contains(':'))
             .map(|line| {
-                let parts: Vec<String> = line.split(':').map(|s| s.to_string()).collect();
-                // Assuming there are at least two parts
-                match parts.split_first() {
-                    Some((var, rest)) => (var.to_string(), rest.join(":")),
-                    None => panic!("No way since I filtered??"),
+                if let Some((var, rest)) = line.split_once(':') {
+                    (var, rest.trim())
+                } else {
+                    panic!("No way since I filtered??");
                 }
             })
             .collect();
 
-        let seen_read_vars = self.update_cmd_with_input_comment(stub_gen, &input_comments);
+        for (ic_var, ic_comment) in input_comment_pairs {
+            if self.input_banned_vars.contains(&String::from(ic_var)) {
+                continue;
+            }
 
-        // Update banned words --
-        // A word is banned if at one point we had an INPUT assignation for a Var
-        // but that Var was not declared yet.
-        // before in the stub generator. Example:
-        //   INPUT
-        //   x: a label
-        //
-        //   read x:int
-        //
-        //   INPUT
-        //   x: another label
-        //
-        // This would not give, as could be expected
-        //   x = int(input())
-        //   x = int(input())  # another label
-        // But
-        //   x = int(input())
-        //   x = int(input())
-
-        // NOTE: Can't do this recursively, it would wrongly ban words if it had to
-        // recur
-
-        // UNUSED???
-        let _banned_words: Vec<(String, String)> = input_comments
-            .iter()
-            .filter(|(kwd, _)| {
-                let is_banned = seen_read_vars.iter().all(|var| var.name != *kwd);
-                if is_banned {
-                    self.input_banned_vars.push(kwd.to_string());
-                }
-                !is_banned
-            })
-            .cloned()
-            .collect();
+            // If it didnt find an assignment to add the comment to, we ban ic_var
+            if !stub_gen
+                .commands
+                .iter_mut()
+                .any(|cmd| Self::update_cmd_with_input_comment_tmp(cmd, ic_var, ic_comment))
+            {
+                self.input_banned_vars.push(String::from(ic_var));
+            }
+        }
     }
 
-    fn update_cmd_with_input_comment(
-        &mut self,
-        stub_gen: &mut Stub,
-        input_comments: &[(String, String)],
-    ) -> Vec<Var> {
-        // Keep track of seen variables
-        let mut seen_read_vars = Vec::new();
-
-        stub_gen.commands = stub_gen
-            .commands
-            .iter()
-            .map(|cmd| match cmd {
-                Cmd::Read(vars) => {
-                    // No recur: iterate the vars
-                    let new_vars = self.update_vars(vars, &mut seen_read_vars, input_comments);
-                    Cmd::Read(new_vars)
-                }
-                Cmd::Loop { count_var, inner_cmd } => {
-                    // Recur
-                    let mut inner_stub = Stub::default(); // temporary wrapper
-                    inner_stub.commands.push(*inner_cmd.clone());
-                    self.update_cmd_with_input_comment(&mut inner_stub, input_comments);
-                    Cmd::Loop {
-                        count_var: count_var.clone(),
-                        inner_cmd: Box::new(inner_stub.commands.pop().unwrap()),
+    // Returns true in case a the current comment was assigned.
+    // Otherwise, returns false so that we can ban that variable.
+    fn update_cmd_with_input_comment_tmp(cmd: &mut Cmd, ic_var: &str, ic_comment: &str) -> bool {
+        match cmd {
+            Cmd::Read(vars) => {
+                for var in vars.iter_mut() {
+                    if var.name == *ic_var && var.input_comment.is_empty() {
+                        var.input_comment = String::from(ic_comment);
+                        return true;
                     }
                 }
-                Cmd::LoopLine { count_var, vars } => {
-                    // No recur: iterate the vars
-                    let new_vars = self.update_vars(vars, &mut seen_read_vars, input_comments);
-                    Cmd::LoopLine {
-                        count_var: count_var.clone(),
-                        vars: new_vars,
+            }
+            Cmd::Loop {
+                count_var: _,
+                ref mut inner_cmd,
+            } => {
+                return Self::update_cmd_with_input_comment_tmp(inner_cmd, ic_var, ic_comment);
+            }
+            Cmd::LoopLine {
+                count_var: _,
+                ref mut vars,
+            } => {
+                for var in vars.iter_mut() {
+                    if var.name == *ic_var && var.input_comment.is_empty() {
+                        var.input_comment = String::from(ic_comment);
+                        return true;
                     }
                 }
-                _ => cmd.clone(),
-            })
-            .collect();
+            }
+            _ => (),
+        }
 
-        seen_read_vars
-    }
-
-    fn update_vars(
-        &self,
-        vars: &[Var],
-        seen_read_vars: &mut Vec<Var>,
-        extracted: &[(String, String)],
-    ) -> Vec<Var> {
-        vars.iter()
-            .map(|var| {
-                // If the var.name is banned, skip.
-                if self.input_banned_vars.contains(&var.name) {
-                    eprintln!("Exited because {} is banned", &var.name);
-                    return var.clone();
-                }
-                seen_read_vars.push(var.clone());
-                // Don't override previous commented assignments
-                if !var.input_comment.is_empty() {
-                    return var.clone();
-                }
-                // Find a suiting keyword - comment pair
-                let input_comment = extracted
-                    .iter()
-                    .find(|(kwd, _)| var.name == *kwd)
-                    .cloned() // Get the first matching keyword or None
-                    .map(|(_, ic)| ic.trim().to_string())
-                    .unwrap_or(var.input_comment.clone());
-
-                Var {
-                    name: var.name.clone(),
-                    t: var.t.clone(),
-                    input_comment,
-                }
-            })
-            .collect()
+        false
     }
 
     fn parse_loop(&mut self) -> Cmd {
