@@ -757,7 +757,7 @@ where
             // If it didnt find an assignment to add the comment to, we ban ic_var
             if !previous_commands
                 .iter_mut()
-                .any(|cmd| Self::update_cmd_with_input_comment_tmp(cmd, ic_var, ic_comment))
+                .any(|cmd| Self::update_cmd_with_input_comment(cmd, ic_var, ic_comment))
             {
                 self.input_banned_vars.push(String::from(ic_var));
             }
@@ -766,7 +766,7 @@ where
 
     // Returns true in case a the current comment was assigned.
     // Otherwise, returns false so that we can ban that variable.
-    fn update_cmd_with_input_comment_tmp(cmd: &mut Cmd, ic_var: &str, ic_comment: &str) -> bool {
+    fn update_cmd_with_input_comment(cmd: &mut Cmd, ic_var: &str, ic_comment: &str) -> bool {
         match cmd {
             Cmd::Read(vars) => {
                 for var in vars.iter_mut() {
@@ -780,7 +780,7 @@ where
                 count_var: _,
                 ref mut inner_cmd,
             } => {
-                return Self::update_cmd_with_input_comment_tmp(inner_cmd, ic_var, ic_comment);
+                return Self::update_cmd_with_input_comment(inner_cmd, ic_var, ic_comment);
             }
             Cmd::LoopLine {
                 count_var: _,
