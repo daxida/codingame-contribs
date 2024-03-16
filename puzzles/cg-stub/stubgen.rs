@@ -93,7 +93,6 @@ pub enum Cmd {
     Read(Vec<Var>),
     Loop { count_var: String, inner_cmd: Box<Cmd> },
     LoopLine { count_var: String, vars: Vec<Var> },
-    // output_text is the text associated by the OUTPUT statement
     Write { text: String, output_comment: String },
     WriteJoin(Vec<JoinTerm>),
 }
@@ -537,7 +536,7 @@ where
                 "loop"      => stub.commands.push(self.parse_loop()),
                 "loopline"  => stub.commands.push(self.parse_loopline()),
                 "OUTPUT"    => self.parse_output_comment(&mut stub.commands),
-                "INPUT"     => self.parse_input_comment(&mut stub),
+                "INPUT"     => self.parse_input_comment(&mut stub.commands),
                 "STATEMENT" => stub.statement = self.parse_statement(),
                 "\n" | ""   => continue,
                 thing => panic!("Unknown token stub generator: {}", thing),
@@ -735,7 +734,7 @@ where
     //   x = int(input())  # another label
     // But
     //   x = int(input())
-    fn parse_input_comment(&mut self, stub_gen: &mut Stub) {
+    fn parse_input_comment(&mut self, previous_commands: &mut [Cmd]) {
         // Here extract the significant pairs (Do with a hash eventually)
         let input_statement = self.parse_statement();
         let input_comment_pairs: Vec<(&str, &str)> = input_statement
@@ -745,7 +744,7 @@ where
                 if let Some((var, rest)) = line.split_once(':') {
                     (var, rest.trim())
                 } else {
-                    panic!("No way since I filtered??");
+                    panic!("Impossible since the list was filtered??");
                 }
             })
             .collect();
@@ -756,8 +755,7 @@ where
             }
 
             // If it didnt find an assignment to add the comment to, we ban ic_var
-            if !stub_gen
-                .commands
+            if !previous_commands
                 .iter_mut()
                 .any(|cmd| Self::update_cmd_with_input_comment_tmp(cmd, ic_var, ic_comment))
             {
