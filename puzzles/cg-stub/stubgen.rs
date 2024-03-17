@@ -446,7 +446,7 @@ impl<'a> Lang<'a> {
             T::Int { .. }    => "int",
             T::Float { .. }  => "float",
             T::Long { .. }   => "int",
-            T::Bool { .. }   => "",
+            T::Bool { .. }   => " != \"0\"",
             T::Word { .. }   => "",
             T::String { .. } => "",
         }
@@ -455,6 +455,7 @@ impl<'a> Lang<'a> {
     fn var_to_assignment(&self, var: &Var, arg: &str, comments_right: bool) -> String {
         let assignment = match Self::type_to_keyword(&var.t) {
             "" => format!("{} = {}", var.name, arg),
+            " != \"0\"" => format!("{} = {} != \"0\"", var.name, arg),
             kw => format!("{} = {}({})", var.name, kw, arg),
         };
 
