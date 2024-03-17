@@ -319,22 +319,16 @@ impl<'a> Lang<'a> {
                     }
                 }
             }
-            Cmd::Loop { .. } => {
+            Cmd::Loop { .. } | Cmd::LoopLine { .. } => {
                 let inner_loop_py = self.cmd_to_s(inner_cmd, loop_count_level + 1, arg);
                 let indented_inner_loop_py = indent(&inner_loop_py, &self.indent);
                 format!("{}\n{}\n", forloop, indented_inner_loop_py)
             }
-            Cmd::Write { .. } => {
+            Cmd::Write { .. } | Cmd::WriteJoin(_) => {
                 let inner_write_py = self.cmd_to_s(inner_cmd, loop_count_level, arg);
                 let indented_inner_write_py = indent(&inner_write_py, &self.indent);
                 format!("{}\n{}\n", forloop, indented_inner_write_py)
             }
-            Cmd::LoopLine { .. } => {
-                let inner_loopline_py = self.cmd_to_s(inner_cmd, loop_count_level + 1, arg);
-                let indented_inner_loopline_py = indent(&inner_loopline_py, &self.indent);
-                format!("{}\n{}\n", forloop, indented_inner_loopline_py)
-            }
-            Cmd::WriteJoin(_) => todo!(),
         }
     }
 
