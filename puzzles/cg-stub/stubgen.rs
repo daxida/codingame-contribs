@@ -1,5 +1,6 @@
 #![allow(clippy::while_let_on_iterator)]
 
+use std::collections::HashMap;
 use std::io;
 use std::io::Read;
 
@@ -25,7 +26,8 @@ pub enum T {
 pub struct Var {
     pub name: String,
     pub t: T,
-    pub input_comment: String,
+    // The None result means this comment was banned
+    pub input_comment: Option<String>,
 }
 
 impl Var {
@@ -33,7 +35,7 @@ impl Var {
         Var {
             name,
             t,
-            input_comment: String::new(),
+            input_comment: Some(String::new()),
         }
     }
 
@@ -351,14 +353,16 @@ impl<'a> Lang<'a> {
                     let forloop = self.keywords.interpolate_forloop(loop_var, iter);
                     let assignment = self.var_to_assignment(single_var, loop_var, false);
                     let indented_assingment = indent(&assignment, &self.indent);
-                    let comment = if single_var.input_comment.is_empty() {
-                        "".to_string()
-                    } else {
-                        format!(
-                            "{}{} {}: {}\n",
-                            &self.indent, self.single_line_comment, single_var.name, single_var.input_comment
-                        )
+                    let comment = match &single_var.input_comment {
+                        Some(comment) if !comment.is_empty() => {
+                            format!(
+                                "{}{} {}: {}\n",
+                                &self.indent, self.single_line_comment, single_var.name, comment
+                            )
+                        }
+                        _ => "".to_string(),
                     };
+
                     format!("{}\n{}{}\n", forloop, comment, indented_assingment)
                 }
             },
@@ -454,10 +458,9 @@ impl<'a> Lang<'a> {
         };
 
         if comments_right {
-            let input_comment = if var.input_comment.is_empty() {
-                "".to_string()
-            } else {
-                format!("  {} {}", self.single_line_comment, var.input_comment)
+            let input_comment = match &var.input_comment {
+                Some(comment) if !comment.is_empty() => format!("  {} {}", self.single_line_comment, comment),
+                _ => "".to_string(),
             };
 
             format!("{}{}", assignment, input_comment)
@@ -469,12 +472,11 @@ impl<'a> Lang<'a> {
     fn input_comment_from_vars(&self, read_vars: &[Var]) -> String {
         let input_comment = read_vars
             .iter()
-            .map(|var| {
-                if var.input_comment.is_empty() {
-                    "".to_string()
-                } else {
-                    format!("{} {}: {}", self.single_line_comment, var.name, var.input_comment)
+            .map(|var| match &var.input_comment {
+                Some(comment) if !comment.is_empty() => {
+                    format!("{} {}: {}", self.single_line_comment, var.name, comment)
                 }
+                _ => "".to_string(),
             })
             .collect::<Vec<String>>()
             .join("\n")
@@ -506,7 +508,9 @@ pub fn parse_generator_stub(generator: String) -> Stub {
 
 struct Parser<StreamType: Iterator> {
     stream: StreamType,
-    input_banned_vars: Vec<String>,
+    // Keys: words,
+    // Values: count down until the ban is removed
+    input_banned_vars: HashMap<String, usize>,
 }
 
 impl<'a, I> Parser<I>
@@ -516,7 +520,7 @@ where
     fn new(stream: I) -> Self {
         Self {
             stream,
-            input_banned_vars: Vec::new(),
+            input_banned_vars: HashMap::new(),
         }
     }
 
@@ -729,6 +733,24 @@ where
     //   x = int(input())  # another label
     // But
     //   x = int(input())
+    //
+    // The use of the input_banned_vars Hash and the remaining_bans counter is a simple
+    // (yet not easy to read) way to deal with pathological cases like this:
+    //
+    // INPUT
+    // a : banned
+    // a : banned
+    //
+    // read a:int a:int a:int
+    //
+    // INPUT
+    // a : comment
+    //
+    // That should be rendered:
+    // # a: comment
+    // a, a, a = [int(i) for i in input().split()]
+    //
+    // where the comment gets assigned to the third a.
     fn parse_input_comment(&mut self, previous_commands: &mut [Cmd]) {
         // Here extract the significant pairs (Do with a hash eventually)
         let input_statement = self.parse_statement();
@@ -737,37 +759,55 @@ where
             .filter(|line| line.contains(':'))
             .map(|line| {
                 if let Some((var, rest)) = line.split_once(':') {
-                    (var, rest.trim())
+                    (var.trim(), rest.trim())
                 } else {
                     panic!("Impossible since the list was filtered??");
                 }
             })
             .collect();
 
-        for (ic_var, ic_comment) in input_comment_pairs {
-            if self.input_banned_vars.contains(&String::from(ic_var)) {
-                continue;
-            }
+        for (ic_var, ic_comment) in input_comment_pairs.clone() {
+            let remaining_bans = self.input_banned_vars.entry(ic_var.to_string()).or_insert(0);
 
-            // If it didnt find an assignment to add the comment to, we ban ic_var
+            // If we didn't find an assignment to add the comment to,
+            // we increment the remaining bans counter
             if !previous_commands
                 .iter_mut()
-                .any(|cmd| Self::update_cmd_with_input_comment(cmd, ic_var, ic_comment))
+                .any(|cmd| Self::update_cmd_with_input_comment(cmd, ic_var, ic_comment, remaining_bans))
             {
-                self.input_banned_vars.push(String::from(ic_var));
+                *self.input_banned_vars.get_mut(ic_var).unwrap() += 1;
             }
         }
     }
 
-    // Returns true in case a the current comment was assigned.
-    // Otherwise, returns false so that we can ban that variable.
-    fn update_cmd_with_input_comment(cmd: &mut Cmd, ic_var: &str, ic_comment: &str) -> bool {
+    // Returns true if the current comment was successfully assigned.
+    // Otherwise, returns false so that we can increase the remaining_bans variable.
+    fn update_cmd_with_input_comment(
+        cmd: &mut Cmd,
+        ic_var: &str,
+        ic_comment: &str,
+        remaining_bans: &mut usize,
+    ) -> bool {
         match cmd {
-            Cmd::Read(vars) => {
+            Cmd::Read(vars) | Cmd::LoopLine { count_var: _, vars } => {
                 for var in vars.iter_mut() {
-                    if var.name == *ic_var && var.input_comment.is_empty() {
-                        var.input_comment = String::from(ic_comment);
-                        return true;
+                    // We found a suitable assignment
+                    if var.name == *ic_var {
+                        // If the variable is not banned...
+                        if let Some(input_comment) = &var.input_comment {
+                            // And we didn't add a comment to it before...
+                            if input_comment.is_empty() {
+                                // If we have a countdown we ban it, and keep going
+                                if *remaining_bans > 0 {
+                                    var.input_comment = None;
+                                    *remaining_bans -= 1;
+                                // or else we assign the comment and exit
+                                } else {
+                                    var.input_comment = Some(String::from(ic_comment));
+                                    return true
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -775,18 +815,7 @@ where
                 count_var: _,
                 ref mut inner_cmd,
             } => {
-                return Self::update_cmd_with_input_comment(inner_cmd, ic_var, ic_comment);
-            }
-            Cmd::LoopLine {
-                count_var: _,
-                ref mut vars,
-            } => {
-                for var in vars.iter_mut() {
-                    if var.name == *ic_var && var.input_comment.is_empty() {
-                        var.input_comment = String::from(ic_comment);
-                        return true;
-                    }
-                }
+                return Self::update_cmd_with_input_comment(inner_cmd, ic_var, ic_comment, remaining_bans);
             }
             _ => (),
         }
