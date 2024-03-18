@@ -831,14 +831,16 @@ where
 
     fn parse_variables(&mut self) -> Vec<Var> {
         let mut vars = Vec::new();
-        for token in self.stream.by_ref() {
-            let var = match token {
-                _ if String::from(token).contains(':') => Self::parse_variable(token),
-                "\n" => break,
-                other => panic!("Error in parse_variables, found '{}'", other),
-            };
-            vars.push(var);
+        let Some(line) = self.upto_newline() else {
+            panic!("Empty line after read keyword")
+        };
+
+        for token in line {
+            if token != "" {
+                vars.push(Self::parse_variable(token))
+            }
         }
+
         vars
     }
 
