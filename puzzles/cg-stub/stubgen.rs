@@ -15,11 +15,9 @@ pub struct Stub {
 impl std::fmt::Debug for Stub {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Stub {{\n  commands: [")?;
-
         for command in &self.commands {
             write!(f, "\n    {:?}", command)?;
         }
-
         write!(f, "\n  ],\n statement: {:?}\n}}", self.statement)
     }
 }
@@ -86,7 +84,7 @@ impl<'a> From<&'a str> for LengthType {
 #[derive(Clone, Debug)]
 pub enum JoinTermType {
     Literal,
-    Variable,
+    Variable(T),
 }
 
 #[derive(Clone, Debug)]
@@ -132,7 +130,7 @@ impl Cmd {
                     .iter()
                     .map(|term| match term.term_type {
                         // Only apply casing to variables and not literals
-                        JoinTermType::Variable => JoinTerm {
+                        JoinTermType::Variable(_) => JoinTerm {
                             name: case_fun(&term.name),
                             term_type: term.term_type.clone(),
                         },
@@ -250,7 +248,7 @@ impl<'a> Lang<'a> {
 
     fn read_to_s(&self, read_vars: &[Var], arg: &str) -> String {
         let out = match read_vars {
-            [] => panic!("Empty read_ts in to_pyc_read"),
+            [] => panic!("Empty read_ts in read_to_s"),
             [single_var] => {
                 // Case 1: one single read_t
                 eprintln!("READ case 1: {:?}", single_var);
@@ -283,7 +281,6 @@ impl<'a> Lang<'a> {
                     eprintln!("READ case 2.2: {:?}", read_vars);
 
                     // INPUT comments: they come AT THE RIGHT of each assignment
-
                     let inputs = "inputs";
                     let split_input = format!("{} = input().split()", inputs);
                     let inner: String = read_vars
@@ -416,9 +413,12 @@ impl<'a> Lang<'a> {
 
         let write_py = join_terms
             .iter()
-            .map(|t| match t.term_type {
-                JoinTermType::Variable => format!("str({})", &t.name),
+            .map(|t| match &t.term_type {
                 JoinTermType::Literal => format!("\"{}\"", &t.name),
+                JoinTermType::Variable(var_type) => match var_type {
+                    T::String { max_length: _ } | T::Word { max_length: _ } => t.name.to_string(),
+                    _ => format!("str({})", &t.name),
+                },
             })
             .collect::<Vec<_>>()
             .join(" + \" \" + ")
@@ -518,6 +518,10 @@ struct Parser<StreamType: Iterator> {
     // Keys: words,
     // Values: count down until the ban is removed
     input_banned_vars: HashMap<String, usize>,
+    // Keep track of read variables for WriteJoin
+    // Keys: var.name,
+    // Values: var.type
+    read_assignments_cache: HashMap<String, T>,
 }
 
 impl<'a, I> Parser<I>
@@ -528,6 +532,7 @@ where
         Self {
             stream,
             input_banned_vars: HashMap::new(),
+            read_assignments_cache: HashMap::new(),
         }
     }
 
@@ -553,7 +558,11 @@ where
     }
 
     fn parse_read(&mut self) -> Cmd {
-        Cmd::Read(self.parse_variables())
+        let variables = self.parse_variables();
+        for var in variables.iter() {
+            self.read_assignments_cache.entry(var.name.clone()).or_insert(var.t.clone());
+        }
+        Cmd::Read(variables)
     }
 
     fn parse_write(&mut self) -> Cmd {
@@ -570,7 +579,7 @@ where
                 .position(|&token| token.starts_with("join(") && !token.starts_with("join()") && first_line)
             {
                 let result_slice = &line[position..];
-                return Self::parse_write_join(result_slice.to_vec())
+                return self.parse_write_join(result_slice.to_vec())
             }
             first_line = false;
             write_text.push(line.join(" "))
@@ -582,7 +591,7 @@ where
         }
     }
 
-    fn parse_write_join(line_stream: Vec<&str>) -> Cmd {
+    fn parse_write_join(&self, line_stream: Vec<&str>) -> Cmd {
         let inner = line_stream.join(" ");
         let terms_finder = Regex::new(r"join\(([^)]*)\)").unwrap();
         let terms_string_captures = terms_finder.captures(&inner);
@@ -605,8 +614,16 @@ where
                 if let Some(mtch) = literal_matcher.captures(term_str) {
                     JoinTerm::new(mtch.get(1).unwrap().as_str().to_owned(), JoinTermType::Literal)
                 } else {
-                    // let var_type = Self::find_variable_type( .. );
-                    JoinTerm::new(term_str.to_owned(), JoinTermType::Variable)
+                    match term_str {
+                        // TODO: better handling of ""
+                        "" => JoinTerm::new(term_str.to_owned(), JoinTermType::Literal),
+                        _ => match self.read_assignments_cache.get(term_str) {
+                            None => panic!("Write join term: '{}' was not previously read!", term_str),
+                            Some(var_type) => {
+                                JoinTerm::new(term_str.to_owned(), JoinTermType::Variable(var_type.clone()))
+                            }
+                        },
+                    }
                 }
             })
             .collect::<Vec<_>>();
@@ -626,16 +643,6 @@ where
             join_terms,
             output_comment: String::new(),
         }
-    }
-
-    // Recursively try to find the previous read Command for the current Variable
-    // This is relevant because if the variable is a str, then we don't need to wrap it into str()
-    // F.ex:
-    //   read var:string(10)
-    //   write join(var, "b")
-    // Should return print(var + " b") and not print(str(var) + " b")
-    fn _find_variable_type() {
-        todo!()
     }
 
     fn parse_text_block(&mut self) -> String {
@@ -919,6 +926,7 @@ fn main() {
     io::stdin().read_line(&mut input_line).unwrap();
     let mut code = String::new();
     io::stdin().read_to_string(&mut code).unwrap();
+
     let stub_generator = parse_generator_stub(code);
 
     let single_line_comment = "#".to_string();
