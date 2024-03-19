@@ -67,21 +67,6 @@ fn apply_case_vars(vars: &[Var], case_fun: fn(&str) -> String) -> Vec<Var> {
 }
 
 #[derive(Clone, Debug)]
-pub enum LengthType {
-    Number,
-    Variable,
-}
-
-impl<'a> From<&'a str> for LengthType {
-    fn from(value: &'a str) -> Self {
-        match value.parse::<usize>() {
-            Ok(_) => Self::Number,
-            Err(_) => Self::Variable,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
 pub enum JoinTermType {
     Literal,
     Variable(T),
