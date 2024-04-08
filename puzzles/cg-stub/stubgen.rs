@@ -781,8 +781,7 @@ where
     }
 
     fn parse_loop(&mut self) -> Cmd {
-        match self.next_past_newline() {
-            Some("\n") => panic!("Could not find count identifier for loop"),
+        match self.first_non_whitespace_token() {
             None => panic!("Unexpected end of input: Loop stub not provided with loop count"),
             Some(other) => Cmd::Loop {
                 count_var: String::from(other),
@@ -792,20 +791,18 @@ where
     }
 
     fn parse_loopable(&mut self) -> Cmd {
-        match self.next_past_newline() {
-            Some("\n") => panic!("Loop not provided with command"),
+        match self.first_non_whitespace_token() {
             Some("read") => self.parse_read(),
             Some("write") => self.parse_write(),
             Some("loopline") => self.parse_loopline(),
             Some("loop") => self.parse_loop(),
-            Some(thing) => panic!("Error parsing loop command in stub generator, got: {}", thing),
+            Some(thing) => panic!("Error parsing loop command in stub generator, got: '{}'", thing),
             None => panic!("Unexpected end of input, expecting command to loop through"),
         }
     }
 
     fn parse_loopline(&mut self) -> Cmd {
-        match self.next_past_newline() {
-            Some("\n") => panic!("Could not find count identifier for loopline"),
+        match self.first_non_whitespace_token() {
             None => panic!("Unexpected end of input: Loopline stub not provided with count identifier"),
             Some(other) => Cmd::LoopLine {
                 count_var: other.to_string(),
@@ -855,20 +852,21 @@ where
         }
     }
 
-    fn next_past_newline(&mut self) -> Option<&'a str> {
-        match self.stream.next() {
-            Some("\n") => self.stream.next(),
-            Some("") => self.next_past_newline(),
-            token => token,
-        }
-    }
-
     fn skip_to_next_line(&mut self) {
         while let Some(token) = self.stream.next() {
             if token == "\n" {
                 break
             }
         }
+    }
+
+    fn first_non_whitespace_token(&mut self) -> Option<&'a str> {
+        while let Some(token) = self.stream.next() {
+            if token != "\n" && token != "" {
+                return Some(token);
+            }
+        }
+        None
     }
 
     // Consumes the newline
