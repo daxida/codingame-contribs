@@ -891,7 +891,7 @@ fn camel_to_snake(input: &str) -> String {
     let mut prev_char_was_upper = false;
 
     for c in input.chars() {
-        if c.is_uppercase() {
+        if c.is_uppercase() || c.is_numeric() {
             if !result.is_empty() && !prev_char_was_upper {
                 result.push('_');
             }
