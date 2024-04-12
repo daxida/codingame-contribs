@@ -1,3 +1,7 @@
+# 56 (Whale)
+a=`tr -cd A-Z`
+p a.gsub!(/../){_1[?Z]||?}.sum/90while a
+
 # 59 (Whale)
 a=`tr -cd A-Z`
 p a.gsub!(/../){_1[?Z]||?}.sum/90while a[1]
