@@ -1,4 +1,5 @@
 # Puzzles
+* [Sorting requests](./puzzles/sorting-requests) - [Contribution](https://www.codingame.com/contribute/view/90634bc6b3782045c772c9542dba6e3476542)
 * [Function notation](./puzzles/function-notation) - [Contribution](https://www.codingame.com/contribute/view/67467b18360c683de95549e76097154928a90)
 * [Ruby parsing](./puzzles/ruby-parsing) - [Contribution](https://www.codingame.com/contribute/view/6251794e1491f5d392a7a064773157491ba4a)
 * [Nickname filtering](./puzzles/nickname-filtering) - [Contribution](https://www.codingame.com/contribute/view/5832652f1a152c2fe38e96f41c636aeab13e2)
