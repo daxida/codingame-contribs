@@ -1,14 +1,20 @@
 LOCAL = true
 DEBUG = false
+N = 20
 TITLES = DATA.to_a.map(&:strip)
+raise "NotUniqueTitlesError" if TITLES.tally.values.any? { _1 > 1 }
 
 def generate(n)
   upto_id = n
   chapters_ids = (1..upto_id).to_a.sample(n)
   raise "SizeError" if TITLES.size < [n, upto_id].min
+  raise "SizeError #{n} != #{chapters_ids.size}" if n != chapters_ids.size
 
-  # chapters_ids = [5, 6, 2, 1, 3]
+  # chapters_ids = [55]
   # n = chapters_ids.size
+
+  raise "NotUniqueIndicesError" if chapters_ids.tally.values.any? { _1 > 1 }
+
   chapters = chapters_ids.map do |idx|
     "#{idx}. #{TITLES[idx]}"
   end
@@ -45,7 +51,7 @@ def get_lis(ary)
     end
     candidates << ans.reverse
   end
-  warn "Candidates size = #{candidates.size}"
+  warn "Candidates size = #{candidates.size}" if DEBUG
 
   candidates
 end
@@ -130,7 +136,7 @@ def main(n=nil)
 end
 
 if LOCAL
-  1.times { main(20) }
+  1.times { main(N) }
 else
   main
 end
@@ -199,7 +205,7 @@ The Crystal Key
 Stormy Seas
 Echoes of Silence
 Secrets of the Stars
-Echoes of Destiny
+Echoes of Destiny Two
 Shadows in the Night
 Voices from Beyond
 The Emerald Isle
@@ -232,7 +238,7 @@ Echoes of Revenge
 The Secret Garden
 Echoes of Desire
 Echoes of Faith
-Echoes of Destiny
+Echoes of Destiny Three
 Echoes of Legends
 Echoes of Honor
 Echoes of Sacrifice
@@ -266,14 +272,14 @@ Echoes of Endurance
 Echoes of Strength
 Echoes of Weakness
 Echoes of Vulnerability
-Echoes of Courage
+Echoes of Courage Two
 Echoes of Fear
 Echoes of Dread
 Echoes of Anticipation
 Echoes of Anxiety
 Echoes of Excitement
 Echoes of Calm
-Echoes of Chaos
+Echoes of Chaos Two
 Echoes of Order
 Echoes of Harmony
 Echoes of Discord
@@ -299,18 +305,18 @@ Echoes of Origin
 Echoes of Destination
 Echoes of Arrival
 Echoes of Departure
-Echoes of Arrival
-Echoes of Departure
+Echoes of Arrival Two
+Echoes of Departure Two
 Echoes of Existence
 Echoes of Nonexistence
 Echoes of Creation
-Echoes of Destruction
+Echoes of Destruction Two
 Echoes of Preservation
 Echoes of Obliteration
 Echoes of Conservation
 Echoes of Consumption
 Echoes of Inception
-Echoes of Conclusion
+Echoes of Conclusion Two
 Echoes of Inquiry
 Echoes of Answer
 Echoes of Question
@@ -322,8 +328,8 @@ Echoes of Thesis
 Echoes of Antithesis
 Echoes of Perspective
 Echoes of Perception
-Echoes of Reality
-Echoes of Fantasy
+Echoes of Reality Two
+Echoes of Fantasy Two
 Echoes of Imagination
 Echoes of Dream
 Echoes of Nightmare
