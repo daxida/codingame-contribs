@@ -1,6 +1,8 @@
 import Text.Printf (printf)
 import Data.List (group, sort, sortOn, intercalate)
 
+-- TODO: Support more than 2 players
+
 ----- Draws // B wins // // A wins
 data History = History Int Int Int
 
