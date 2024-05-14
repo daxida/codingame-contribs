@@ -1,6 +1,8 @@
 # Puzzles
 * [Sorting requests](./puzzles/sorting-requests) - [Contribution](https://www.codingame.com/contribute/view/90634bc6b3782045c772c9542dba6e3476542)
 * [Codongame](./puzzles/codongame) - [Contribution](https://www.codingame.com/contribute/view/778302a4c4149234ae1ee8e5177b79776aa92)
+* [CG tags](./puzzles/cg-tags) - [Contribution](https://www.codingame.com/contribute/view/76377b03907fe32d1e0b4357b911f7c99717a)
+* [CG stub](./puzzles/cg-stub) - [Contribution](https://www.codingame.com/contribute/view/759481e6afefea199836a6cb76e15b21d673d)
 * [Function notation](./puzzles/function-notation) - [Contribution](https://www.codingame.com/contribute/view/67467b18360c683de95549e76097154928a90)
 * [Ruby parsing](./puzzles/ruby-parsing) - [Contribution](https://www.codingame.com/contribute/view/6251794e1491f5d392a7a064773157491ba4a)
 * [Nickname filtering](./puzzles/nickname-filtering) - [Contribution](https://www.codingame.com/contribute/view/5832652f1a152c2fe38e96f41c636aeab13e2)
@@ -17,7 +19,6 @@
 * [Tournament](./clashes/tournament) - [Contribution](https://www.codingame.com/contribute/view/76609432329e7c65215f13bf31a32fac86382)
 * [Longest snake](./clashes/longest-snake) - [Contribution](https://www.codingame.com/contribute/view/745622814caf0e629ed827ff72b44439500cc)
 * [Conjecture](./clashes/conjecture) - [Contribution](https://www.codingame.com/contribute/view/7040402a6fe461068f5cf5296607c184d043a)
-* [Codons](./clashes/codons) - [Contribution](https://www.codingame.com/contribute/view/700438e1d37d9c816b05acdd59782dddbbfef)
 * [Secretary problem](./clashes/secretary-problem) - [Contribution](https://www.codingame.com/contribute/view/604712d9661c87c342f9ab9013d35c76068ea)
 * [Poll](./clashes/poll) - [Contribution](https://www.codingame.com/contribute/view/59613d02d032fc416f1cbadb39dc79d271194)
 * [Gauss primes](./clashes/gauss-primes) - [Contribution](https://www.codingame.com/contribute/view/554552a272a49fb873235502d28fcc12939c7)
