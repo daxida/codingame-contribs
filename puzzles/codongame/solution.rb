@@ -43,10 +43,6 @@ def solve(s)
     translations.each do |t|
       warn "%02d %02d %s" % [t.join.size, t.join("-").size, t.join("-")]
     end
-    warn "--"
-
-    # We want the length of the "-" joined strings to be ambiguous
-    puts "Error" unless translations.map { _1.join("-").size }.uniq.size == 2
   end
 
   puts "Error: multiple solutions" if second_best.join.size == ans.join.size
