@@ -1,6 +1,6 @@
 # Puzzles
 * [Sorting requests](./puzzles/sorting-requests) - [Contribution](https://www.codingame.com/contribute/view/90634bc6b3782045c772c9542dba6e3476542)
-* [Codongame](./puzzles/codongame) - [Contribution](https://www.codingame.com/contribute/view/778302a4c4149234ae1ee8e5177b79776aa92)
+* [Codongame](./puzzles/codongame) - [Contribution](https://www.codingame.com/contribute/view/778302a4c4149234ae1ee8e5177b79776aa92) - [Puzzle](https://www.codingame.com/training/easy/codongame)
 * [CG tags](./puzzles/cg-tags) - [Contribution](https://www.codingame.com/contribute/view/76377b03907fe32d1e0b4357b911f7c99717a)
 * [CG stub](./puzzles/cg-stub) - [Contribution](https://www.codingame.com/contribute/view/759481e6afefea199836a6cb76e15b21d673d)
 * [Function notation](./puzzles/function-notation) - [Contribution](https://www.codingame.com/contribute/view/67467b18360c683de95549e76097154928a90)
