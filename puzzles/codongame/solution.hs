@@ -79,35 +79,29 @@ startCodon = "AUG"
 endCodons :: [String]
 endCodons = ["UAA", "UAG", "UGA"]
 
-pTriplet :: Parser String
-pTriplet = count 3 anyChar
+pCodonGeneric :: (String -> Bool) -> Parser String
+pCodonGeneric fn = do
+  triplet <- count 3 anyChar
+  guard $ fn triplet
+  return triplet
 
 pStartCodon :: Parser String
-pStartCodon = string startCodon
+pStartCodon = pCodonGeneric (== startCodon)
 
 pNotStartCodon :: Parser String
-pNotStartCodon = try $ do
-  triplet <- try pTriplet
-  guard $ triplet /= startCodon
-  return triplet
+pNotStartCodon = pCodonGeneric (/= startCodon)
 
 pEndCodon :: Parser String
-pEndCodon = do
-  triplet <- pTriplet
-  guard $ triplet `elem` endCodons
-  return triplet
+pEndCodon = pCodonGeneric (`elem` endCodons)
 
 pNotEndCodon :: Parser String
-pNotEndCodon = try $ do
-  triplet <- try pTriplet
-  guard $ triplet `notElem` endCodons
-  return triplet
+pNotEndCodon = pCodonGeneric (`notElem` endCodons)
 
 pSequence :: Parser String
-pSequence = try $ do
-  many pNotStartCodon
+pSequence = do
+  many $ try pNotStartCodon
   start <- pStartCodon
-  nonEnds <- many pNotEndCodon
+  nonEnds <- many $ try pNotEndCodon
   end <- pEndCodon
   return $ concatMap toAminoAcid $ start : nonEnds
 
