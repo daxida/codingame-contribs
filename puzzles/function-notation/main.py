@@ -4,7 +4,7 @@ import ast
 class SwapBinOpTransformer(ast.NodeTransformer):
     def visit_BinOp(self, node):
         # Only swap Mult (~ do not modify Add)
-        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult):
+        if isinstance(node.op, ast.Mult):
             node.left, node.right = node.right, node.left
         return self.generic_visit(node)
 
